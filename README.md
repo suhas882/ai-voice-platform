@@ -62,6 +62,10 @@ $env:VAANI_SECRET_KEY = "use-a-long-random-value-here"
 docker compose up --build
 ```
 
+### Render deployment
+
+For a Docker web service, use the repository root as the Docker build context and `Dockerfile` as the Dockerfile path. The image creates `/data` before the app starts, which prevents SQLite's `unable to open database file` startup error. Keep `VAANI_DATABASE_URL` set to `sqlite:////data/vaani.db` and attach a persistent disk mounted at `/data`; Render's filesystem is otherwise ephemeral and the database will be lost on restart or redeploy. Set `VAANI_SECRET_KEY` and `VAANI_BOOTSTRAP_PASSWORD` as private environment variables in the Render dashboard. For multi-instance or production use, use managed PostgreSQL and configure `VAANI_DATABASE_URL` for that database instead.
+
 ## Project structure
 
 ```text

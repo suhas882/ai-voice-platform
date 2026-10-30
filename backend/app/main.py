@@ -20,6 +20,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel, Field
 from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text, create_engine, func, select
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship, sessionmaker
 
 from .telephony import TelephonyNotReady, twilio_provider
@@ -33,13 +34,16 @@ if not (ROOT / "web").is_dir():
     ROOT = Path(__file__).resolve().parents[1]
 WEB_DIR = ROOT / "web"
 DATABASE_URL = os.getenv("VAANI_DATABASE_URL", "sqlite:///./vaani.db")
+database_url = make_url(DATABASE_URL)
+if database_url.get_backend_name() == "sqlite" and database_url.database not in (None, "", ":memory:"):
+    Path(database_url.database).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
 SECRET_KEY = os.getenv("VAANI_SECRET_KEY", "local-development-key-change-before-deploy")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_MINUTES = 60 * 12
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {})
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if database_url.get_backend_name() == "sqlite" else {})
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
